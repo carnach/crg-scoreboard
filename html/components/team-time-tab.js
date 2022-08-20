@@ -724,7 +724,7 @@ function createTeamTable(gameId) {
       colorA.toggleClass('AlternateName', v != null);
     });
 
-    var names = nameA.add(altNameA);
+    var names = nameA.add(colorA).add(altNameA);
     WS.Register(prefix + '.Color(*)', function (k, v) {
       v = v || '';
       switch (k.Color) {
@@ -1075,6 +1075,7 @@ function createTimeTable(gameId) {
   var numberRow = row.clone().addClass('Number').appendTo(table);
   var controlRow = row.clone().addClass('Control').appendTo(table);
   var timeRow = row.clone().addClass('Time').appendTo(table);
+  var periodDialog = createPeriodDialog(gameId);
 
   $.each(['Period', 'Jam', 'Lineup', 'Timeout', 'Intermission'], function () {
     var clock = String(this);
@@ -1116,8 +1117,7 @@ function createTimeTable(gameId) {
     WS.Register(prefix + '.Number', function (k, v) {
       number.text(v);
     });
-    if (clock === 'Period') {
-      var periodDialog = createPeriodDialog(gameId);
+    if (clock === 'Period' || clock === 'Intermission') {
       numberTr.children('td:eq(1)').on('click', function () {
         periodDialog.dialog('open');
       });
@@ -1600,12 +1600,13 @@ function createTimeoutDialog(gameId) {
       row.remove();
       return;
     }
-    if (k.field === 'PrecedingJamNumber') {
+    if (k.field === 'PrecedingJam') {
       row.remove();
       row = [];
     }
     if (v != null && row.length === 0) {
       var jam = Number(WS.state[prefix + '.PrecedingJamNumber']);
+      processJamNumber(k, jam);
       var dur = isTrue(WS.state[prefix + '.Running']) ? 'Running' : _timeConversions.msToMinSec(WS.state[prefix + '.Duration'], true);
       var pc = _timeConversions.msToMinSec(
         isTrue(WS.state[prefix + '.Running'])
